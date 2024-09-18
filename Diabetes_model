@@ -1,0 +1,1367 @@
+{
+ "cells": [
+  {
+   "cell_type": "code",
+   "execution_count": 1,
+   "id": "2a06d1f9",
+   "metadata": {
+    "_cell_guid": "b1076dfc-b9ad-4769-8c92-a6c4dae69d19",
+    "_uuid": "8f2839f25d086af736a60e9eeb907d3b93b6e0e5",
+    "execution": {
+     "iopub.execute_input": "2024-09-18T18:43:41.530544Z",
+     "iopub.status.busy": "2024-09-18T18:43:41.530163Z",
+     "iopub.status.idle": "2024-09-18T18:43:42.292991Z",
+     "shell.execute_reply": "2024-09-18T18:43:42.292086Z"
+    },
+    "papermill": {
+     "duration": 0.772746,
+     "end_time": "2024-09-18T18:43:42.295328",
+     "exception": false,
+     "start_time": "2024-09-18T18:43:41.522582",
+     "status": "completed"
+    },
+    "tags": []
+   },
+   "outputs": [
+    {
+     "name": "stdout",
+     "output_type": "stream",
+     "text": [
+      "/kaggle/input/diabetes-classification-dataset/Diabetes Classification.csv\n"
+     ]
+    }
+   ],
+   "source": [
+    "# This Python 3 environment comes with many helpful analytics libraries installed\n",
+    "# It is defined by the kaggle/python Docker image: https://github.com/kaggle/docker-python\n",
+    "# For example, here's several helpful packages to load\n",
+    "\n",
+    "import numpy as np # linear algebra\n",
+    "import pandas as pd # data processing, CSV file I/O (e.g. pd.read_csv)\n",
+    "\n",
+    "# Input data files are available in the read-only \"../input/\" directory\n",
+    "# For example, running this (by clicking run or pressing Shift+Enter) will list all files under the input directory\n",
+    "\n",
+    "import os\n",
+    "for dirname, _, filenames in os.walk('/kaggle/input'):\n",
+    "    for filename in filenames:\n",
+    "        print(os.path.join(dirname, filename))\n",
+    "\n",
+    "# You can write up to 20GB to the current directory (/kaggle/working/) that gets preserved as output when you create a version using \"Save & Run All\" \n",
+    "# You can also write temporary files to /kaggle/temp/, but they won't be saved outside of the current session"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 2,
+   "id": "7448e700",
+   "metadata": {
+    "execution": {
+     "iopub.execute_input": "2024-09-18T18:43:42.308640Z",
+     "iopub.status.busy": "2024-09-18T18:43:42.308192Z",
+     "iopub.status.idle": "2024-09-18T18:43:44.118248Z",
+     "shell.execute_reply": "2024-09-18T18:43:44.117387Z"
+    },
+    "papermill": {
+     "duration": 1.819405,
+     "end_time": "2024-09-18T18:43:44.120730",
+     "exception": false,
+     "start_time": "2024-09-18T18:43:42.301325",
+     "status": "completed"
+    },
+    "tags": []
+   },
+   "outputs": [],
+   "source": [
+    "import pandas as pd\n",
+    "import matplotlib.pyplot as plt\n",
+    "import seaborn as sns\n",
+    "from sklearn.model_selection import train_test_split\n",
+    "from sklearn.linear_model import LogisticRegression\n",
+    "from sklearn.ensemble import RandomForestClassifier\n",
+    "from sklearn.svm import SVC\n",
+    "from sklearn.metrics import accuracy_score"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 3,
+   "id": "115fbecd",
+   "metadata": {
+    "execution": {
+     "iopub.execute_input": "2024-09-18T18:43:44.133326Z",
+     "iopub.status.busy": "2024-09-18T18:43:44.132894Z",
+     "iopub.status.idle": "2024-09-18T18:43:44.161895Z",
+     "shell.execute_reply": "2024-09-18T18:43:44.161013Z"
+    },
+    "papermill": {
+     "duration": 0.037543,
+     "end_time": "2024-09-18T18:43:44.164022",
+     "exception": false,
+     "start_time": "2024-09-18T18:43:44.126479",
+     "status": "completed"
+    },
+    "tags": []
+   },
+   "outputs": [],
+   "source": [
+    "df = pd.read_csv('/kaggle/input/diabetes-classification-dataset/Diabetes Classification.csv')"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 4,
+   "id": "4d825f59",
+   "metadata": {
+    "execution": {
+     "iopub.execute_input": "2024-09-18T18:43:44.176285Z",
+     "iopub.status.busy": "2024-09-18T18:43:44.175996Z",
+     "iopub.status.idle": "2024-09-18T18:43:44.185264Z",
+     "shell.execute_reply": "2024-09-18T18:43:44.184319Z"
+    },
+    "papermill": {
+     "duration": 0.017421,
+     "end_time": "2024-09-18T18:43:44.187139",
+     "exception": false,
+     "start_time": "2024-09-18T18:43:44.169718",
+     "status": "completed"
+    },
+    "tags": []
+   },
+   "outputs": [
+    {
+     "name": "stdout",
+     "output_type": "stream",
+     "text": [
+      "{'F', 'f', 'M'}\n"
+     ]
+    }
+   ],
+   "source": [
+    "unq_num_gender = set(df['Gender'])\n",
+    "\n",
+    "print(unq_num_gender)\n"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 5,
+   "id": "6401ba74",
+   "metadata": {
+    "execution": {
+     "iopub.execute_input": "2024-09-18T18:43:44.199538Z",
+     "iopub.status.busy": "2024-09-18T18:43:44.199213Z",
+     "iopub.status.idle": "2024-09-18T18:43:44.231282Z",
+     "shell.execute_reply": "2024-09-18T18:43:44.230439Z"
+    },
+    "papermill": {
+     "duration": 0.040726,
+     "end_time": "2024-09-18T18:43:44.233535",
+     "exception": false,
+     "start_time": "2024-09-18T18:43:44.192809",
+     "status": "completed"
+    },
+    "tags": []
+   },
+   "outputs": [
+    {
+     "data": {
+      "text/html": [
+       "<div>\n",
+       "<style scoped>\n",
+       "    .dataframe tbody tr th:only-of-type {\n",
+       "        vertical-align: middle;\n",
+       "    }\n",
+       "\n",
+       "    .dataframe tbody tr th {\n",
+       "        vertical-align: top;\n",
+       "    }\n",
+       "\n",
+       "    .dataframe thead th {\n",
+       "        text-align: right;\n",
+       "    }\n",
+       "</style>\n",
+       "<table border=\"1\" class=\"dataframe\">\n",
+       "  <thead>\n",
+       "    <tr style=\"text-align: right;\">\n",
+       "      <th></th>\n",
+       "      <th>Unnamed: 0</th>\n",
+       "      <th>Age</th>\n",
+       "      <th>BMI</th>\n",
+       "      <th>Chol</th>\n",
+       "      <th>TG</th>\n",
+       "      <th>HDL</th>\n",
+       "      <th>LDL</th>\n",
+       "      <th>Cr</th>\n",
+       "      <th>BUN</th>\n",
+       "      <th>Diagnosis</th>\n",
+       "      <th>num_gender</th>\n",
+       "    </tr>\n",
+       "  </thead>\n",
+       "  <tbody>\n",
+       "    <tr>\n",
+       "      <th>0</th>\n",
+       "      <td>0</td>\n",
+       "      <td>50</td>\n",
+       "      <td>24</td>\n",
+       "      <td>4.2</td>\n",
+       "      <td>0.9</td>\n",
+       "      <td>2.4</td>\n",
+       "      <td>1.4</td>\n",
+       "      <td>46.0</td>\n",
+       "      <td>4.7</td>\n",
+       "      <td>0</td>\n",
+       "      <td>1</td>\n",
+       "    </tr>\n",
+       "    <tr>\n",
+       "      <th>1</th>\n",
+       "      <td>1</td>\n",
+       "      <td>26</td>\n",
+       "      <td>23</td>\n",
+       "      <td>3.7</td>\n",
+       "      <td>1.4</td>\n",
+       "      <td>1.1</td>\n",
+       "      <td>2.1</td>\n",
+       "      <td>62.0</td>\n",
+       "      <td>4.5</td>\n",
+       "      <td>0</td>\n",
+       "      <td>2</td>\n",
+       "    </tr>\n",
+       "    <tr>\n",
+       "      <th>2</th>\n",
+       "      <td>2</td>\n",
+       "      <td>33</td>\n",
+       "      <td>21</td>\n",
+       "      <td>4.9</td>\n",
+       "      <td>1.0</td>\n",
+       "      <td>0.8</td>\n",
+       "      <td>2.0</td>\n",
+       "      <td>46.0</td>\n",
+       "      <td>7.1</td>\n",
+       "      <td>0</td>\n",
+       "      <td>2</td>\n",
+       "    </tr>\n",
+       "    <tr>\n",
+       "      <th>3</th>\n",
+       "      <td>3</td>\n",
+       "      <td>45</td>\n",
+       "      <td>21</td>\n",
+       "      <td>2.9</td>\n",
+       "      <td>1.0</td>\n",
+       "      <td>1.0</td>\n",
+       "      <td>1.5</td>\n",
+       "      <td>24.0</td>\n",
+       "      <td>2.3</td>\n",
+       "      <td>0</td>\n",
+       "      <td>1</td>\n",
+       "    </tr>\n",
+       "    <tr>\n",
+       "      <th>4</th>\n",
+       "      <td>4</td>\n",
+       "      <td>50</td>\n",
+       "      <td>24</td>\n",
+       "      <td>3.6</td>\n",
+       "      <td>1.3</td>\n",
+       "      <td>0.9</td>\n",
+       "      <td>2.1</td>\n",
+       "      <td>50.0</td>\n",
+       "      <td>2.0</td>\n",
+       "      <td>0</td>\n",
+       "      <td>1</td>\n",
+       "    </tr>\n",
+       "  </tbody>\n",
+       "</table>\n",
+       "</div>"
+      ],
+      "text/plain": [
+       "   Unnamed: 0  Age  BMI  Chol   TG  HDL  LDL    Cr  BUN  Diagnosis  num_gender\n",
+       "0           0   50   24   4.2  0.9  2.4  1.4  46.0  4.7          0           1\n",
+       "1           1   26   23   3.7  1.4  1.1  2.1  62.0  4.5          0           2\n",
+       "2           2   33   21   4.9  1.0  0.8  2.0  46.0  7.1          0           2\n",
+       "3           3   45   21   2.9  1.0  1.0  1.5  24.0  2.3          0           1\n",
+       "4           4   50   24   3.6  1.3  0.9  2.1  50.0  2.0          0           1"
+      ]
+     },
+     "execution_count": 5,
+     "metadata": {},
+     "output_type": "execute_result"
+    }
+   ],
+   "source": [
+    "num_gender = []\n",
+    "\n",
+    "for i in df['Gender']:\n",
+    "    if(i == 'F'):\n",
+    "        num_gender.append(1)\n",
+    "    elif(i == 'M'):\n",
+    "        num_gender.append(2)\n",
+    "    elif(i == 'f'):\n",
+    "        num_gender.append(1)\n",
+    "    \n",
+    "df['num_gender'] = num_gender\n",
+    "\n",
+    "df.drop(columns = 'Gender', inplace = True)\n",
+    "\n",
+    "df.head()"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 6,
+   "id": "f1c5d401",
+   "metadata": {
+    "execution": {
+     "iopub.execute_input": "2024-09-18T18:43:44.247493Z",
+     "iopub.status.busy": "2024-09-18T18:43:44.247188Z",
+     "iopub.status.idle": "2024-09-18T18:43:44.257827Z",
+     "shell.execute_reply": "2024-09-18T18:43:44.256903Z"
+    },
+    "papermill": {
+     "duration": 0.019654,
+     "end_time": "2024-09-18T18:43:44.259793",
+     "exception": false,
+     "start_time": "2024-09-18T18:43:44.240139",
+     "status": "completed"
+    },
+    "tags": []
+   },
+   "outputs": [
+    {
+     "name": "stdout",
+     "output_type": "stream",
+     "text": [
+      "   Age  BMI  Chol   TG  HDL  LDL    Cr  BUN  Diagnosis  num_gender\n",
+      "0   50   24   4.2  0.9  2.4  1.4  46.0  4.7          0           1\n",
+      "1   26   23   3.7  1.4  1.1  2.1  62.0  4.5          0           2\n",
+      "2   33   21   4.9  1.0  0.8  2.0  46.0  7.1          0           2\n",
+      "3   45   21   2.9  1.0  1.0  1.5  24.0  2.3          0           1\n",
+      "4   50   24   3.6  1.3  0.9  2.1  50.0  2.0          0           1\n"
+     ]
+    }
+   ],
+   "source": [
+    "# Drop the 'Unnamed: 0' column\n",
+    "df = df.drop(columns=['Unnamed: 0'])\n",
+    "\n",
+    "# Verify the changes\n",
+    "print(df.head())\n"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 7,
+   "id": "c8752565",
+   "metadata": {
+    "execution": {
+     "iopub.execute_input": "2024-09-18T18:43:44.273030Z",
+     "iopub.status.busy": "2024-09-18T18:43:44.272532Z",
+     "iopub.status.idle": "2024-09-18T18:43:44.277827Z",
+     "shell.execute_reply": "2024-09-18T18:43:44.276854Z"
+    },
+    "papermill": {
+     "duration": 0.013987,
+     "end_time": "2024-09-18T18:43:44.279727",
+     "exception": false,
+     "start_time": "2024-09-18T18:43:44.265740",
+     "status": "completed"
+    },
+    "tags": []
+   },
+   "outputs": [],
+   "source": [
+    "X = df.drop('Diagnosis', axis = 1)\n",
+    "\n",
+    "y = df['Diagnosis']"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 8,
+   "id": "e9d5f68c",
+   "metadata": {
+    "execution": {
+     "iopub.execute_input": "2024-09-18T18:43:44.292677Z",
+     "iopub.status.busy": "2024-09-18T18:43:44.292358Z",
+     "iopub.status.idle": "2024-09-18T18:43:44.311270Z",
+     "shell.execute_reply": "2024-09-18T18:43:44.310419Z"
+    },
+    "papermill": {
+     "duration": 0.02763,
+     "end_time": "2024-09-18T18:43:44.313266",
+     "exception": false,
+     "start_time": "2024-09-18T18:43:44.285636",
+     "status": "completed"
+    },
+    "tags": []
+   },
+   "outputs": [
+    {
+     "data": {
+      "text/html": [
+       "<div>\n",
+       "<style scoped>\n",
+       "    .dataframe tbody tr th:only-of-type {\n",
+       "        vertical-align: middle;\n",
+       "    }\n",
+       "\n",
+       "    .dataframe tbody tr th {\n",
+       "        vertical-align: top;\n",
+       "    }\n",
+       "\n",
+       "    .dataframe thead th {\n",
+       "        text-align: right;\n",
+       "    }\n",
+       "</style>\n",
+       "<table border=\"1\" class=\"dataframe\">\n",
+       "  <thead>\n",
+       "    <tr style=\"text-align: right;\">\n",
+       "      <th></th>\n",
+       "      <th>Age</th>\n",
+       "      <th>BMI</th>\n",
+       "      <th>Chol</th>\n",
+       "      <th>TG</th>\n",
+       "      <th>HDL</th>\n",
+       "      <th>LDL</th>\n",
+       "      <th>Cr</th>\n",
+       "      <th>BUN</th>\n",
+       "      <th>num_gender</th>\n",
+       "    </tr>\n",
+       "  </thead>\n",
+       "  <tbody>\n",
+       "    <tr>\n",
+       "      <th>0</th>\n",
+       "      <td>50</td>\n",
+       "      <td>24</td>\n",
+       "      <td>4.20</td>\n",
+       "      <td>0.90</td>\n",
+       "      <td>2.40</td>\n",
+       "      <td>1.40</td>\n",
+       "      <td>46.0</td>\n",
+       "      <td>4.70</td>\n",
+       "      <td>1</td>\n",
+       "    </tr>\n",
+       "    <tr>\n",
+       "      <th>1</th>\n",
+       "      <td>26</td>\n",
+       "      <td>23</td>\n",
+       "      <td>3.70</td>\n",
+       "      <td>1.40</td>\n",
+       "      <td>1.10</td>\n",
+       "      <td>2.10</td>\n",
+       "      <td>62.0</td>\n",
+       "      <td>4.50</td>\n",
+       "      <td>2</td>\n",
+       "    </tr>\n",
+       "    <tr>\n",
+       "      <th>2</th>\n",
+       "      <td>33</td>\n",
+       "      <td>21</td>\n",
+       "      <td>4.90</td>\n",
+       "      <td>1.00</td>\n",
+       "      <td>0.80</td>\n",
+       "      <td>2.00</td>\n",
+       "      <td>46.0</td>\n",
+       "      <td>7.10</td>\n",
+       "      <td>2</td>\n",
+       "    </tr>\n",
+       "    <tr>\n",
+       "      <th>3</th>\n",
+       "      <td>45</td>\n",
+       "      <td>21</td>\n",
+       "      <td>2.90</td>\n",
+       "      <td>1.00</td>\n",
+       "      <td>1.00</td>\n",
+       "      <td>1.50</td>\n",
+       "      <td>24.0</td>\n",
+       "      <td>2.30</td>\n",
+       "      <td>1</td>\n",
+       "    </tr>\n",
+       "    <tr>\n",
+       "      <th>4</th>\n",
+       "      <td>50</td>\n",
+       "      <td>24</td>\n",
+       "      <td>3.60</td>\n",
+       "      <td>1.30</td>\n",
+       "      <td>0.90</td>\n",
+       "      <td>2.10</td>\n",
+       "      <td>50.0</td>\n",
+       "      <td>2.00</td>\n",
+       "      <td>1</td>\n",
+       "    </tr>\n",
+       "    <tr>\n",
+       "      <th>...</th>\n",
+       "      <td>...</td>\n",
+       "      <td>...</td>\n",
+       "      <td>...</td>\n",
+       "      <td>...</td>\n",
+       "      <td>...</td>\n",
+       "      <td>...</td>\n",
+       "      <td>...</td>\n",
+       "      <td>...</td>\n",
+       "      <td>...</td>\n",
+       "    </tr>\n",
+       "    <tr>\n",
+       "      <th>5127</th>\n",
+       "      <td>54</td>\n",
+       "      <td>23</td>\n",
+       "      <td>5.00</td>\n",
+       "      <td>1.50</td>\n",
+       "      <td>1.24</td>\n",
+       "      <td>2.98</td>\n",
+       "      <td>77.0</td>\n",
+       "      <td>3.50</td>\n",
+       "      <td>2</td>\n",
+       "    </tr>\n",
+       "    <tr>\n",
+       "      <th>5128</th>\n",
+       "      <td>50</td>\n",
+       "      <td>22</td>\n",
+       "      <td>4.37</td>\n",
+       "      <td>2.09</td>\n",
+       "      <td>1.37</td>\n",
+       "      <td>2.29</td>\n",
+       "      <td>47.3</td>\n",
+       "      <td>4.40</td>\n",
+       "      <td>1</td>\n",
+       "    </tr>\n",
+       "    <tr>\n",
+       "      <th>5129</th>\n",
+       "      <td>67</td>\n",
+       "      <td>24</td>\n",
+       "      <td>3.89</td>\n",
+       "      <td>1.38</td>\n",
+       "      <td>1.14</td>\n",
+       "      <td>2.17</td>\n",
+       "      <td>70.6</td>\n",
+       "      <td>4.73</td>\n",
+       "      <td>2</td>\n",
+       "    </tr>\n",
+       "    <tr>\n",
+       "      <th>5130</th>\n",
+       "      <td>60</td>\n",
+       "      <td>29</td>\n",
+       "      <td>5.91</td>\n",
+       "      <td>1.29</td>\n",
+       "      <td>1.73</td>\n",
+       "      <td>2.85</td>\n",
+       "      <td>50.2</td>\n",
+       "      <td>7.33</td>\n",
+       "      <td>1</td>\n",
+       "    </tr>\n",
+       "    <tr>\n",
+       "      <th>5131</th>\n",
+       "      <td>37</td>\n",
+       "      <td>34</td>\n",
+       "      <td>5.42</td>\n",
+       "      <td>2.66</td>\n",
+       "      <td>1.08</td>\n",
+       "      <td>2.87</td>\n",
+       "      <td>75.5</td>\n",
+       "      <td>4.61</td>\n",
+       "      <td>2</td>\n",
+       "    </tr>\n",
+       "  </tbody>\n",
+       "</table>\n",
+       "<p>5132 rows × 9 columns</p>\n",
+       "</div>"
+      ],
+      "text/plain": [
+       "      Age  BMI  Chol    TG   HDL   LDL    Cr   BUN  num_gender\n",
+       "0      50   24  4.20  0.90  2.40  1.40  46.0  4.70           1\n",
+       "1      26   23  3.70  1.40  1.10  2.10  62.0  4.50           2\n",
+       "2      33   21  4.90  1.00  0.80  2.00  46.0  7.10           2\n",
+       "3      45   21  2.90  1.00  1.00  1.50  24.0  2.30           1\n",
+       "4      50   24  3.60  1.30  0.90  2.10  50.0  2.00           1\n",
+       "...   ...  ...   ...   ...   ...   ...   ...   ...         ...\n",
+       "5127   54   23  5.00  1.50  1.24  2.98  77.0  3.50           2\n",
+       "5128   50   22  4.37  2.09  1.37  2.29  47.3  4.40           1\n",
+       "5129   67   24  3.89  1.38  1.14  2.17  70.6  4.73           2\n",
+       "5130   60   29  5.91  1.29  1.73  2.85  50.2  7.33           1\n",
+       "5131   37   34  5.42  2.66  1.08  2.87  75.5  4.61           2\n",
+       "\n",
+       "[5132 rows x 9 columns]"
+      ]
+     },
+     "execution_count": 8,
+     "metadata": {},
+     "output_type": "execute_result"
+    }
+   ],
+   "source": [
+    "X"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 9,
+   "id": "7f63d5ab",
+   "metadata": {
+    "execution": {
+     "iopub.execute_input": "2024-09-18T18:43:44.329132Z",
+     "iopub.status.busy": "2024-09-18T18:43:44.328816Z",
+     "iopub.status.idle": "2024-09-18T18:43:44.335582Z",
+     "shell.execute_reply": "2024-09-18T18:43:44.334687Z"
+    },
+    "papermill": {
+     "duration": 0.016456,
+     "end_time": "2024-09-18T18:43:44.337389",
+     "exception": false,
+     "start_time": "2024-09-18T18:43:44.320933",
+     "status": "completed"
+    },
+    "tags": []
+   },
+   "outputs": [
+    {
+     "data": {
+      "text/plain": [
+       "0       0\n",
+       "1       0\n",
+       "2       0\n",
+       "3       0\n",
+       "4       0\n",
+       "       ..\n",
+       "5127    1\n",
+       "5128    1\n",
+       "5129    1\n",
+       "5130    1\n",
+       "5131    1\n",
+       "Name: Diagnosis, Length: 5132, dtype: int64"
+      ]
+     },
+     "execution_count": 9,
+     "metadata": {},
+     "output_type": "execute_result"
+    }
+   ],
+   "source": [
+    "y"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 10,
+   "id": "9c1bdde0",
+   "metadata": {
+    "execution": {
+     "iopub.execute_input": "2024-09-18T18:43:44.350949Z",
+     "iopub.status.busy": "2024-09-18T18:43:44.350670Z",
+     "iopub.status.idle": "2024-09-18T18:43:44.358916Z",
+     "shell.execute_reply": "2024-09-18T18:43:44.358195Z"
+    },
+    "papermill": {
+     "duration": 0.017354,
+     "end_time": "2024-09-18T18:43:44.360984",
+     "exception": false,
+     "start_time": "2024-09-18T18:43:44.343630",
+     "status": "completed"
+    },
+    "tags": []
+   },
+   "outputs": [],
+   "source": [
+    "X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 11,
+   "id": "fa08deb4",
+   "metadata": {
+    "execution": {
+     "iopub.execute_input": "2024-09-18T18:43:44.375900Z",
+     "iopub.status.busy": "2024-09-18T18:43:44.375621Z",
+     "iopub.status.idle": "2024-09-18T18:43:44.393113Z",
+     "shell.execute_reply": "2024-09-18T18:43:44.392266Z"
+    },
+    "papermill": {
+     "duration": 0.026944,
+     "end_time": "2024-09-18T18:43:44.394882",
+     "exception": false,
+     "start_time": "2024-09-18T18:43:44.367938",
+     "status": "completed"
+    },
+    "tags": []
+   },
+   "outputs": [
+    {
+     "data": {
+      "text/html": [
+       "<div>\n",
+       "<style scoped>\n",
+       "    .dataframe tbody tr th:only-of-type {\n",
+       "        vertical-align: middle;\n",
+       "    }\n",
+       "\n",
+       "    .dataframe tbody tr th {\n",
+       "        vertical-align: top;\n",
+       "    }\n",
+       "\n",
+       "    .dataframe thead th {\n",
+       "        text-align: right;\n",
+       "    }\n",
+       "</style>\n",
+       "<table border=\"1\" class=\"dataframe\">\n",
+       "  <thead>\n",
+       "    <tr style=\"text-align: right;\">\n",
+       "      <th></th>\n",
+       "      <th>Age</th>\n",
+       "      <th>BMI</th>\n",
+       "      <th>Chol</th>\n",
+       "      <th>TG</th>\n",
+       "      <th>HDL</th>\n",
+       "      <th>LDL</th>\n",
+       "      <th>Cr</th>\n",
+       "      <th>BUN</th>\n",
+       "      <th>num_gender</th>\n",
+       "    </tr>\n",
+       "  </thead>\n",
+       "  <tbody>\n",
+       "    <tr>\n",
+       "      <th>3740</th>\n",
+       "      <td>36</td>\n",
+       "      <td>20</td>\n",
+       "      <td>4.87</td>\n",
+       "      <td>0.79</td>\n",
+       "      <td>1.580000</td>\n",
+       "      <td>2.980000</td>\n",
+       "      <td>54.1</td>\n",
+       "      <td>3.68</td>\n",
+       "      <td>1</td>\n",
+       "    </tr>\n",
+       "    <tr>\n",
+       "      <th>949</th>\n",
+       "      <td>43</td>\n",
+       "      <td>22</td>\n",
+       "      <td>4.08</td>\n",
+       "      <td>0.61</td>\n",
+       "      <td>1.740000</td>\n",
+       "      <td>2.030000</td>\n",
+       "      <td>49.3</td>\n",
+       "      <td>4.59</td>\n",
+       "      <td>1</td>\n",
+       "    </tr>\n",
+       "    <tr>\n",
+       "      <th>3826</th>\n",
+       "      <td>25</td>\n",
+       "      <td>20</td>\n",
+       "      <td>4.60</td>\n",
+       "      <td>1.00</td>\n",
+       "      <td>1.330000</td>\n",
+       "      <td>2.630000</td>\n",
+       "      <td>80.0</td>\n",
+       "      <td>4.25</td>\n",
+       "      <td>2</td>\n",
+       "    </tr>\n",
+       "    <tr>\n",
+       "      <th>19</th>\n",
+       "      <td>33</td>\n",
+       "      <td>24</td>\n",
+       "      <td>4.20</td>\n",
+       "      <td>1.50</td>\n",
+       "      <td>1.200000</td>\n",
+       "      <td>2.300000</td>\n",
+       "      <td>62.0</td>\n",
+       "      <td>5.30</td>\n",
+       "      <td>1</td>\n",
+       "    </tr>\n",
+       "    <tr>\n",
+       "      <th>3049</th>\n",
+       "      <td>72</td>\n",
+       "      <td>21</td>\n",
+       "      <td>5.33</td>\n",
+       "      <td>1.55</td>\n",
+       "      <td>1.200000</td>\n",
+       "      <td>2.940000</td>\n",
+       "      <td>65.0</td>\n",
+       "      <td>3.56</td>\n",
+       "      <td>1</td>\n",
+       "    </tr>\n",
+       "    <tr>\n",
+       "      <th>...</th>\n",
+       "      <td>...</td>\n",
+       "      <td>...</td>\n",
+       "      <td>...</td>\n",
+       "      <td>...</td>\n",
+       "      <td>...</td>\n",
+       "      <td>...</td>\n",
+       "      <td>...</td>\n",
+       "      <td>...</td>\n",
+       "      <td>...</td>\n",
+       "    </tr>\n",
+       "    <tr>\n",
+       "      <th>4426</th>\n",
+       "      <td>58</td>\n",
+       "      <td>27</td>\n",
+       "      <td>4.98</td>\n",
+       "      <td>2.48</td>\n",
+       "      <td>4.860753</td>\n",
+       "      <td>4.860753</td>\n",
+       "      <td>68.3</td>\n",
+       "      <td>6.24</td>\n",
+       "      <td>2</td>\n",
+       "    </tr>\n",
+       "    <tr>\n",
+       "      <th>466</th>\n",
+       "      <td>63</td>\n",
+       "      <td>30</td>\n",
+       "      <td>3.60</td>\n",
+       "      <td>5.10</td>\n",
+       "      <td>0.900000</td>\n",
+       "      <td>2.500000</td>\n",
+       "      <td>63.0</td>\n",
+       "      <td>5.90</td>\n",
+       "      <td>2</td>\n",
+       "    </tr>\n",
+       "    <tr>\n",
+       "      <th>3092</th>\n",
+       "      <td>40</td>\n",
+       "      <td>16</td>\n",
+       "      <td>4.00</td>\n",
+       "      <td>0.00</td>\n",
+       "      <td>1.000000</td>\n",
+       "      <td>2.000000</td>\n",
+       "      <td>67.0</td>\n",
+       "      <td>4.00</td>\n",
+       "      <td>2</td>\n",
+       "    </tr>\n",
+       "    <tr>\n",
+       "      <th>3772</th>\n",
+       "      <td>42</td>\n",
+       "      <td>23</td>\n",
+       "      <td>4.00</td>\n",
+       "      <td>0.80</td>\n",
+       "      <td>1.120000</td>\n",
+       "      <td>2.460000</td>\n",
+       "      <td>96.0</td>\n",
+       "      <td>5.49</td>\n",
+       "      <td>2</td>\n",
+       "    </tr>\n",
+       "    <tr>\n",
+       "      <th>860</th>\n",
+       "      <td>78</td>\n",
+       "      <td>25</td>\n",
+       "      <td>5.83</td>\n",
+       "      <td>2.10</td>\n",
+       "      <td>1.080000</td>\n",
+       "      <td>3.500000</td>\n",
+       "      <td>81.4</td>\n",
+       "      <td>4.30</td>\n",
+       "      <td>2</td>\n",
+       "    </tr>\n",
+       "  </tbody>\n",
+       "</table>\n",
+       "<p>4105 rows × 9 columns</p>\n",
+       "</div>"
+      ],
+      "text/plain": [
+       "      Age  BMI  Chol    TG       HDL       LDL    Cr   BUN  num_gender\n",
+       "3740   36   20  4.87  0.79  1.580000  2.980000  54.1  3.68           1\n",
+       "949    43   22  4.08  0.61  1.740000  2.030000  49.3  4.59           1\n",
+       "3826   25   20  4.60  1.00  1.330000  2.630000  80.0  4.25           2\n",
+       "19     33   24  4.20  1.50  1.200000  2.300000  62.0  5.30           1\n",
+       "3049   72   21  5.33  1.55  1.200000  2.940000  65.0  3.56           1\n",
+       "...   ...  ...   ...   ...       ...       ...   ...   ...         ...\n",
+       "4426   58   27  4.98  2.48  4.860753  4.860753  68.3  6.24           2\n",
+       "466    63   30  3.60  5.10  0.900000  2.500000  63.0  5.90           2\n",
+       "3092   40   16  4.00  0.00  1.000000  2.000000  67.0  4.00           2\n",
+       "3772   42   23  4.00  0.80  1.120000  2.460000  96.0  5.49           2\n",
+       "860    78   25  5.83  2.10  1.080000  3.500000  81.4  4.30           2\n",
+       "\n",
+       "[4105 rows x 9 columns]"
+      ]
+     },
+     "execution_count": 11,
+     "metadata": {},
+     "output_type": "execute_result"
+    }
+   ],
+   "source": [
+    "X_train"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 12,
+   "id": "1d4d7673",
+   "metadata": {
+    "execution": {
+     "iopub.execute_input": "2024-09-18T18:43:44.409236Z",
+     "iopub.status.busy": "2024-09-18T18:43:44.408960Z",
+     "iopub.status.idle": "2024-09-18T18:43:45.295800Z",
+     "shell.execute_reply": "2024-09-18T18:43:45.294844Z"
+    },
+    "papermill": {
+     "duration": 0.896646,
+     "end_time": "2024-09-18T18:43:45.298320",
+     "exception": false,
+     "start_time": "2024-09-18T18:43:44.401674",
+     "status": "completed"
+    },
+    "tags": []
+   },
+   "outputs": [
+    {
+     "data": {
+      "text/html": [
+       "<style>#sk-container-id-1 {color: black;background-color: white;}#sk-container-id-1 pre{padding: 0;}#sk-container-id-1 div.sk-toggleable {background-color: white;}#sk-container-id-1 label.sk-toggleable__label {cursor: pointer;display: block;width: 100%;margin-bottom: 0;padding: 0.3em;box-sizing: border-box;text-align: center;}#sk-container-id-1 label.sk-toggleable__label-arrow:before {content: \"▸\";float: left;margin-right: 0.25em;color: #696969;}#sk-container-id-1 label.sk-toggleable__label-arrow:hover:before {color: black;}#sk-container-id-1 div.sk-estimator:hover label.sk-toggleable__label-arrow:before {color: black;}#sk-container-id-1 div.sk-toggleable__content {max-height: 0;max-width: 0;overflow: hidden;text-align: left;background-color: #f0f8ff;}#sk-container-id-1 div.sk-toggleable__content pre {margin: 0.2em;color: black;border-radius: 0.25em;background-color: #f0f8ff;}#sk-container-id-1 input.sk-toggleable__control:checked~div.sk-toggleable__content {max-height: 200px;max-width: 100%;overflow: auto;}#sk-container-id-1 input.sk-toggleable__control:checked~label.sk-toggleable__label-arrow:before {content: \"▾\";}#sk-container-id-1 div.sk-estimator input.sk-toggleable__control:checked~label.sk-toggleable__label {background-color: #d4ebff;}#sk-container-id-1 div.sk-label input.sk-toggleable__control:checked~label.sk-toggleable__label {background-color: #d4ebff;}#sk-container-id-1 input.sk-hidden--visually {border: 0;clip: rect(1px 1px 1px 1px);clip: rect(1px, 1px, 1px, 1px);height: 1px;margin: -1px;overflow: hidden;padding: 0;position: absolute;width: 1px;}#sk-container-id-1 div.sk-estimator {font-family: monospace;background-color: #f0f8ff;border: 1px dotted black;border-radius: 0.25em;box-sizing: border-box;margin-bottom: 0.5em;}#sk-container-id-1 div.sk-estimator:hover {background-color: #d4ebff;}#sk-container-id-1 div.sk-parallel-item::after {content: \"\";width: 100%;border-bottom: 1px solid gray;flex-grow: 1;}#sk-container-id-1 div.sk-label:hover label.sk-toggleable__label {background-color: #d4ebff;}#sk-container-id-1 div.sk-serial::before {content: \"\";position: absolute;border-left: 1px solid gray;box-sizing: border-box;top: 0;bottom: 0;left: 50%;z-index: 0;}#sk-container-id-1 div.sk-serial {display: flex;flex-direction: column;align-items: center;background-color: white;padding-right: 0.2em;padding-left: 0.2em;position: relative;}#sk-container-id-1 div.sk-item {position: relative;z-index: 1;}#sk-container-id-1 div.sk-parallel {display: flex;align-items: stretch;justify-content: center;background-color: white;position: relative;}#sk-container-id-1 div.sk-item::before, #sk-container-id-1 div.sk-parallel-item::before {content: \"\";position: absolute;border-left: 1px solid gray;box-sizing: border-box;top: 0;bottom: 0;left: 50%;z-index: -1;}#sk-container-id-1 div.sk-parallel-item {display: flex;flex-direction: column;z-index: 1;position: relative;background-color: white;}#sk-container-id-1 div.sk-parallel-item:first-child::after {align-self: flex-end;width: 50%;}#sk-container-id-1 div.sk-parallel-item:last-child::after {align-self: flex-start;width: 50%;}#sk-container-id-1 div.sk-parallel-item:only-child::after {width: 0;}#sk-container-id-1 div.sk-dashed-wrapped {border: 1px dashed gray;margin: 0 0.4em 0.5em 0.4em;box-sizing: border-box;padding-bottom: 0.4em;background-color: white;}#sk-container-id-1 div.sk-label label {font-family: monospace;font-weight: bold;display: inline-block;line-height: 1.2em;}#sk-container-id-1 div.sk-label-container {text-align: center;}#sk-container-id-1 div.sk-container {/* jupyter's `normalize.less` sets `[hidden] { display: none; }` but bootstrap.min.css set `[hidden] { display: none !important; }` so we also need the `!important` here to be able to override the default hidden behavior on the sphinx rendered scikit-learn.org. See: https://github.com/scikit-learn/scikit-learn/issues/21755 */display: inline-block !important;position: relative;}#sk-container-id-1 div.sk-text-repr-fallback {display: none;}</style><div id=\"sk-container-id-1\" class=\"sk-top-container\"><div class=\"sk-text-repr-fallback\"><pre>RandomForestClassifier(random_state=42)</pre><b>In a Jupyter environment, please rerun this cell to show the HTML representation or trust the notebook. <br />On GitHub, the HTML representation is unable to render, please try loading this page with nbviewer.org.</b></div><div class=\"sk-container\" hidden><div class=\"sk-item\"><div class=\"sk-estimator sk-toggleable\"><input class=\"sk-toggleable__control sk-hidden--visually\" id=\"sk-estimator-id-1\" type=\"checkbox\" checked><label for=\"sk-estimator-id-1\" class=\"sk-toggleable__label sk-toggleable__label-arrow\">RandomForestClassifier</label><div class=\"sk-toggleable__content\"><pre>RandomForestClassifier(random_state=42)</pre></div></div></div></div></div>"
+      ],
+      "text/plain": [
+       "RandomForestClassifier(random_state=42)"
+      ]
+     },
+     "execution_count": 12,
+     "metadata": {},
+     "output_type": "execute_result"
+    }
+   ],
+   "source": [
+    "rf_classifier = RandomForestClassifier(random_state = 42)\n",
+    "rf_classifier.fit(X_train, y_train)\n"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 13,
+   "id": "e520b573",
+   "metadata": {
+    "execution": {
+     "iopub.execute_input": "2024-09-18T18:43:45.317943Z",
+     "iopub.status.busy": "2024-09-18T18:43:45.317076Z",
+     "iopub.status.idle": "2024-09-18T18:43:45.340781Z",
+     "shell.execute_reply": "2024-09-18T18:43:45.339763Z"
+    },
+    "papermill": {
+     "duration": 0.034032,
+     "end_time": "2024-09-18T18:43:45.343074",
+     "exception": false,
+     "start_time": "2024-09-18T18:43:45.309042",
+     "status": "completed"
+    },
+    "tags": []
+   },
+   "outputs": [
+    {
+     "data": {
+      "text/html": [
+       "<div>\n",
+       "<style scoped>\n",
+       "    .dataframe tbody tr th:only-of-type {\n",
+       "        vertical-align: middle;\n",
+       "    }\n",
+       "\n",
+       "    .dataframe tbody tr th {\n",
+       "        vertical-align: top;\n",
+       "    }\n",
+       "\n",
+       "    .dataframe thead th {\n",
+       "        text-align: right;\n",
+       "    }\n",
+       "</style>\n",
+       "<table border=\"1\" class=\"dataframe\">\n",
+       "  <thead>\n",
+       "    <tr style=\"text-align: right;\">\n",
+       "      <th></th>\n",
+       "      <th>Age</th>\n",
+       "      <th>BMI</th>\n",
+       "      <th>Chol</th>\n",
+       "      <th>TG</th>\n",
+       "      <th>HDL</th>\n",
+       "      <th>LDL</th>\n",
+       "      <th>Cr</th>\n",
+       "      <th>BUN</th>\n",
+       "      <th>num_gender</th>\n",
+       "    </tr>\n",
+       "  </thead>\n",
+       "  <tbody>\n",
+       "    <tr>\n",
+       "      <th>5106</th>\n",
+       "      <td>68</td>\n",
+       "      <td>29</td>\n",
+       "      <td>5.22</td>\n",
+       "      <td>3.55</td>\n",
+       "      <td>0.87</td>\n",
+       "      <td>2.46</td>\n",
+       "      <td>93.8</td>\n",
+       "      <td>4.89</td>\n",
+       "      <td>2</td>\n",
+       "    </tr>\n",
+       "    <tr>\n",
+       "      <th>2186</th>\n",
+       "      <td>28</td>\n",
+       "      <td>22</td>\n",
+       "      <td>4.38</td>\n",
+       "      <td>1.17</td>\n",
+       "      <td>1.39</td>\n",
+       "      <td>1.87</td>\n",
+       "      <td>46.0</td>\n",
+       "      <td>4.00</td>\n",
+       "      <td>1</td>\n",
+       "    </tr>\n",
+       "    <tr>\n",
+       "      <th>2589</th>\n",
+       "      <td>54</td>\n",
+       "      <td>18</td>\n",
+       "      <td>4.09</td>\n",
+       "      <td>0.96</td>\n",
+       "      <td>1.43</td>\n",
+       "      <td>2.50</td>\n",
+       "      <td>81.7</td>\n",
+       "      <td>7.68</td>\n",
+       "      <td>2</td>\n",
+       "    </tr>\n",
+       "    <tr>\n",
+       "      <th>831</th>\n",
+       "      <td>40</td>\n",
+       "      <td>19</td>\n",
+       "      <td>5.87</td>\n",
+       "      <td>1.29</td>\n",
+       "      <td>1.75</td>\n",
+       "      <td>3.37</td>\n",
+       "      <td>61.1</td>\n",
+       "      <td>4.10</td>\n",
+       "      <td>1</td>\n",
+       "    </tr>\n",
+       "    <tr>\n",
+       "      <th>1421</th>\n",
+       "      <td>41</td>\n",
+       "      <td>22</td>\n",
+       "      <td>4.50</td>\n",
+       "      <td>0.50</td>\n",
+       "      <td>1.75</td>\n",
+       "      <td>1.94</td>\n",
+       "      <td>52.0</td>\n",
+       "      <td>3.12</td>\n",
+       "      <td>1</td>\n",
+       "    </tr>\n",
+       "    <tr>\n",
+       "      <th>...</th>\n",
+       "      <td>...</td>\n",
+       "      <td>...</td>\n",
+       "      <td>...</td>\n",
+       "      <td>...</td>\n",
+       "      <td>...</td>\n",
+       "      <td>...</td>\n",
+       "      <td>...</td>\n",
+       "      <td>...</td>\n",
+       "      <td>...</td>\n",
+       "    </tr>\n",
+       "    <tr>\n",
+       "      <th>1662</th>\n",
+       "      <td>53</td>\n",
+       "      <td>23</td>\n",
+       "      <td>4.03</td>\n",
+       "      <td>1.57</td>\n",
+       "      <td>1.03</td>\n",
+       "      <td>2.56</td>\n",
+       "      <td>72.4</td>\n",
+       "      <td>6.00</td>\n",
+       "      <td>2</td>\n",
+       "    </tr>\n",
+       "    <tr>\n",
+       "      <th>833</th>\n",
+       "      <td>36</td>\n",
+       "      <td>26</td>\n",
+       "      <td>6.69</td>\n",
+       "      <td>3.49</td>\n",
+       "      <td>0.91</td>\n",
+       "      <td>3.64</td>\n",
+       "      <td>67.5</td>\n",
+       "      <td>3.86</td>\n",
+       "      <td>2</td>\n",
+       "    </tr>\n",
+       "    <tr>\n",
+       "      <th>366</th>\n",
+       "      <td>69</td>\n",
+       "      <td>32</td>\n",
+       "      <td>5.30</td>\n",
+       "      <td>3.80</td>\n",
+       "      <td>1.40</td>\n",
+       "      <td>2.30</td>\n",
+       "      <td>243.0</td>\n",
+       "      <td>14.50</td>\n",
+       "      <td>1</td>\n",
+       "    </tr>\n",
+       "    <tr>\n",
+       "      <th>3778</th>\n",
+       "      <td>30</td>\n",
+       "      <td>19</td>\n",
+       "      <td>4.11</td>\n",
+       "      <td>1.27</td>\n",
+       "      <td>1.27</td>\n",
+       "      <td>2.40</td>\n",
+       "      <td>88.8</td>\n",
+       "      <td>6.11</td>\n",
+       "      <td>2</td>\n",
+       "    </tr>\n",
+       "    <tr>\n",
+       "      <th>1235</th>\n",
+       "      <td>78</td>\n",
+       "      <td>27</td>\n",
+       "      <td>4.87</td>\n",
+       "      <td>1.40</td>\n",
+       "      <td>1.05</td>\n",
+       "      <td>3.03</td>\n",
+       "      <td>47.4</td>\n",
+       "      <td>5.60</td>\n",
+       "      <td>1</td>\n",
+       "    </tr>\n",
+       "  </tbody>\n",
+       "</table>\n",
+       "<p>1027 rows × 9 columns</p>\n",
+       "</div>"
+      ],
+      "text/plain": [
+       "      Age  BMI  Chol    TG   HDL   LDL     Cr    BUN  num_gender\n",
+       "5106   68   29  5.22  3.55  0.87  2.46   93.8   4.89           2\n",
+       "2186   28   22  4.38  1.17  1.39  1.87   46.0   4.00           1\n",
+       "2589   54   18  4.09  0.96  1.43  2.50   81.7   7.68           2\n",
+       "831    40   19  5.87  1.29  1.75  3.37   61.1   4.10           1\n",
+       "1421   41   22  4.50  0.50  1.75  1.94   52.0   3.12           1\n",
+       "...   ...  ...   ...   ...   ...   ...    ...    ...         ...\n",
+       "1662   53   23  4.03  1.57  1.03  2.56   72.4   6.00           2\n",
+       "833    36   26  6.69  3.49  0.91  3.64   67.5   3.86           2\n",
+       "366    69   32  5.30  3.80  1.40  2.30  243.0  14.50           1\n",
+       "3778   30   19  4.11  1.27  1.27  2.40   88.8   6.11           2\n",
+       "1235   78   27  4.87  1.40  1.05  3.03   47.4   5.60           1\n",
+       "\n",
+       "[1027 rows x 9 columns]"
+      ]
+     },
+     "execution_count": 13,
+     "metadata": {},
+     "output_type": "execute_result"
+    }
+   ],
+   "source": [
+    "X_test"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 14,
+   "id": "e2e73cd6",
+   "metadata": {
+    "execution": {
+     "iopub.execute_input": "2024-09-18T18:43:45.360448Z",
+     "iopub.status.busy": "2024-09-18T18:43:45.360047Z",
+     "iopub.status.idle": "2024-09-18T18:43:45.387402Z",
+     "shell.execute_reply": "2024-09-18T18:43:45.386622Z"
+    },
+    "papermill": {
+     "duration": 0.038488,
+     "end_time": "2024-09-18T18:43:45.389560",
+     "exception": false,
+     "start_time": "2024-09-18T18:43:45.351072",
+     "status": "completed"
+    },
+    "tags": []
+   },
+   "outputs": [],
+   "source": [
+    "y_pred = RandomForestClassifier.predict(rf_classifier, X_test)"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 15,
+   "id": "39810fae",
+   "metadata": {
+    "execution": {
+     "iopub.execute_input": "2024-09-18T18:43:45.406083Z",
+     "iopub.status.busy": "2024-09-18T18:43:45.405794Z",
+     "iopub.status.idle": "2024-09-18T18:43:45.410842Z",
+     "shell.execute_reply": "2024-09-18T18:43:45.409819Z"
+    },
+    "papermill": {
+     "duration": 0.015876,
+     "end_time": "2024-09-18T18:43:45.413419",
+     "exception": false,
+     "start_time": "2024-09-18T18:43:45.397543",
+     "status": "completed"
+    },
+    "tags": []
+   },
+   "outputs": [
+    {
+     "name": "stdout",
+     "output_type": "stream",
+     "text": [
+      "[1 0 0 ... 1 0 1]\n"
+     ]
+    }
+   ],
+   "source": [
+    "print(y_pred)"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 16,
+   "id": "56143617",
+   "metadata": {
+    "execution": {
+     "iopub.execute_input": "2024-09-18T18:43:45.429687Z",
+     "iopub.status.busy": "2024-09-18T18:43:45.429334Z",
+     "iopub.status.idle": "2024-09-18T18:43:45.436116Z",
+     "shell.execute_reply": "2024-09-18T18:43:45.434794Z"
+    },
+    "papermill": {
+     "duration": 0.016961,
+     "end_time": "2024-09-18T18:43:45.438249",
+     "exception": false,
+     "start_time": "2024-09-18T18:43:45.421288",
+     "status": "completed"
+    },
+    "tags": []
+   },
+   "outputs": [
+    {
+     "name": "stdout",
+     "output_type": "stream",
+     "text": [
+      "0.8237585199610516\n"
+     ]
+    }
+   ],
+   "source": [
+    "accuracy = accuracy_score(y_test, y_pred)\n",
+    "print(accuracy)"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 17,
+   "id": "f0f30d0b",
+   "metadata": {
+    "execution": {
+     "iopub.execute_input": "2024-09-18T18:43:45.455351Z",
+     "iopub.status.busy": "2024-09-18T18:43:45.454677Z",
+     "iopub.status.idle": "2024-09-18T18:43:59.421643Z",
+     "shell.execute_reply": "2024-09-18T18:43:59.420529Z"
+    },
+    "papermill": {
+     "duration": 13.977647,
+     "end_time": "2024-09-18T18:43:59.423994",
+     "exception": false,
+     "start_time": "2024-09-18T18:43:45.446347",
+     "status": "completed"
+    },
+    "tags": []
+   },
+   "outputs": [
+    {
+     "name": "stdout",
+     "output_type": "stream",
+     "text": [
+      "Requirement already satisfied: joblib in /opt/conda/lib/python3.10/site-packages (1.4.2)\r\n"
+     ]
+    }
+   ],
+   "source": [
+    "!pip install joblib\n",
+    "import joblib"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 18,
+   "id": "bed57f4b",
+   "metadata": {
+    "execution": {
+     "iopub.execute_input": "2024-09-18T18:43:59.440818Z",
+     "iopub.status.busy": "2024-09-18T18:43:59.440145Z",
+     "iopub.status.idle": "2024-09-18T18:43:59.518927Z",
+     "shell.execute_reply": "2024-09-18T18:43:59.517876Z"
+    },
+    "papermill": {
+     "duration": 0.089244,
+     "end_time": "2024-09-18T18:43:59.520979",
+     "exception": false,
+     "start_time": "2024-09-18T18:43:59.431735",
+     "status": "completed"
+    },
+    "tags": []
+   },
+   "outputs": [
+    {
+     "name": "stdout",
+     "output_type": "stream",
+     "text": [
+      "Model saved successfully as 'random_forest_model.pkl'\n"
+     ]
+    }
+   ],
+   "source": [
+    "joblib.dump(rf_classifier, 'random_forest_model.pkl')\n",
+    "\n",
+    "print(\"Model saved successfully as 'random_forest_model.pkl'\")"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "id": "e27a93ee",
+   "metadata": {
+    "papermill": {
+     "duration": 0.007334,
+     "end_time": "2024-09-18T18:43:59.535955",
+     "exception": false,
+     "start_time": "2024-09-18T18:43:59.528621",
+     "status": "completed"
+    },
+    "tags": []
+   },
+   "source": [
+    "TESTING"
+   ]
+  }
+ ],
+ "metadata": {
+  "kaggle": {
+   "accelerator": "nvidiaTeslaT4",
+   "dataSources": [
+    {
+     "datasetId": 4522151,
+     "sourceId": 7737512,
+     "sourceType": "datasetVersion"
+    }
+   ],
+   "dockerImageVersionId": 30762,
+   "isGpuEnabled": true,
+   "isInternetEnabled": true,
+   "language": "python",
+   "sourceType": "notebook"
+  },
+  "kernelspec": {
+   "display_name": "Python 3",
+   "language": "python",
+   "name": "python3"
+  },
+  "language_info": {
+   "codemirror_mode": {
+    "name": "ipython",
+    "version": 3
+   },
+   "file_extension": ".py",
+   "mimetype": "text/x-python",
+   "name": "python",
+   "nbconvert_exporter": "python",
+   "pygments_lexer": "ipython3",
+   "version": "3.10.14"
+  },
+  "papermill": {
+   "default_parameters": {},
+   "duration": 21.250671,
+   "end_time": "2024-09-18T18:44:00.061709",
+   "environment_variables": {},
+   "exception": null,
+   "input_path": "__notebook__.ipynb",
+   "output_path": "__notebook__.ipynb",
+   "parameters": {},
+   "start_time": "2024-09-18T18:43:38.811038",
+   "version": "2.6.0"
+  }
+ },
+ "nbformat": 4,
+ "nbformat_minor": 5
+}
